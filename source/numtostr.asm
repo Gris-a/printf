@@ -4,6 +4,7 @@ global uinttostr
 global octtostr
 global hextostr
 global bintostr
+global floattostr
 
 ; ===============================================
 ; entry:
@@ -157,7 +158,52 @@ EndPush_b2:
             ret
 ; -----------------------------------------------
 
+; ===============================================
+; entry:
+;       xmm0     float
+;       rdi     buffer addr
+; exit:
+;       rax     output len
+; destr:
+; ===============================================
+floattostr:
+            sub     rsp, 8
+            vmovsd  [rsp], xmm0
+            mov rcx, [rsp]
+            mov r11, 0x000fffffffffffff
+            and rcx, r11
+            mov r11, 0x0010000000000000
+            or rcx, r11
+
+
+; -----------------------------------------------
+            mov rax, rcx
+            mov r11, rdi
+; -----------------------------------------------
+PushNumber_f:
+            xor edx, edx                        ; rdx = 0
+            div qword [base10q]                 ; rdx:rax / 10
+
+            add dl, 0x30                        ; 'i' is 0x3i in ascii
+            mov byte [r11], dl                  ; save digit to buffer
+            inc r11
+
+            test rax, rax                       ; if(rax == 0) then traslated to str
+            je EndPush_f
+
+            jmp PushNumber_f
+EndPush_f:
+; -----------------------------------------------
+            sub r11, rdi                        ; count length
+            mov rax, r11                        ; load length
+
+            vmovsd  xmm0, [rsp]
+            add     rsp, 8
+            ret
+
+
 
 section     .data
 base10      dd 10
+base10q     dq 10
 config      db "0123456789abcdef"

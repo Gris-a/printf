@@ -7,6 +7,7 @@ extern uinttostr
 extern octtostr
 extern hextostr
 extern bintostr
+extern floattostr
 
 %macro MPUSH 1-*
     %rep %0
@@ -125,6 +126,13 @@ Format_u:
             call uinttostr
             jmp BufNum
 ; -----------------------------------------------
+Format_f:
+            sub rsp, 64
+            mov rdi, rsp
+            mov rsi, rdi
+            call floattostr
+            jmp BufNum
+; -----------------------------------------------
 BufNum:
             lea r9, [rsi + rax - 1]
 BufDigit:
@@ -198,7 +206,9 @@ FormatSwitchTable:
                     dq Format_b                 ; b
                     dq PutChar                  ; c
                     dq Format_d                 ; d
-times 'g' - 'e' + 1 dq BadEnding                ; e..g
+                    dq BadEnding                ; e
+                    dq Format_f                 ; f
+                    dq BadEnding                ; g
                     dq Format_h                 ; h
 times 'n' - 'i' + 1 dq BadEnding                ; i..n
                     dq Format_o                 ; o
